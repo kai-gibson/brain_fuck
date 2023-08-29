@@ -1,5 +1,5 @@
 #include <iostream>
-#include <memory>
+#include <stdint.h>
 
 struct Node {
     u_int8_t val = 0;
@@ -19,15 +19,15 @@ public:
         h->next = nullptr;
     }
     ~Tape() {
-        while (h->next != nullptr) {
+        while (h->next != nullptr) { // Cycle to last node
             this->next(); 
         }
-        while (h->prev != nullptr) {
+        while (h->prev != nullptr) { // free tape elements
             Node* tmp = h;
             this->prev();
             free(tmp);
         }
-        free(h);
+        free(h);  // 
     }
 
     void next() {
@@ -70,8 +70,7 @@ public:
     }
 
     uint8_t val() {
-        uint8_t ret = h->val;
-        return ret;
+        return h->val;
     }
 };
 
