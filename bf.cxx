@@ -1,66 +1,86 @@
 #include <iostream>
-#include <stdint.h>
-#include <new>
-#include <cstring>
+#include <memory>
 
-class Mem {
-protected:
-    uint8_t* mem;
-    uint16_t pos;
+struct Node {
+    u_int8_t val = 0;
+    Node* prev = nullptr;
+    Node* next = nullptr;
+};
 
-    uint16_t m_size;
+class Tape {
+private:
+    Node* h;
 
 public:
-    Mem(uint16_t size) {
-        m_size = size;
-
-        mem = (uint8_t*)malloc(size);
-        std::memset(mem, 0, size);
-
-        pos = (m_size/2)-1;
-
+    Tape() {
+        h = (Node*)malloc(sizeof(Node));
     }
-
-    ~Mem() { free(mem); }
-
-    void inc() { 
-        if (mem[pos] != 0xFF) {
-            mem[pos] += 1; 
+    ~Tape() {
+        while (h->next != nullptr) {
+            this->next(); 
+        }
+        while (h->prev != nullptr) {
+            Node** tmp = &h;
+            this->prev();
+            free(*tmp);
         }
     }
 
-    void dec() { 
-        if (mem[pos] != 0) {
-            mem[pos] -= 1; 
+    void next() {
+        if (h->next == nullptr) { 
+            Node* tmp_next = new Node();
+            tmp_next = (Node*)malloc(sizeof(Node));
+            tmp_next->val = 0;
+            tmp_next->prev = h;
+            tmp_next->next = nullptr;
+
+            h->next = tmp_next;
+            h = h->next;
+        } else {
+            h = h->next;
         }
     }
 
-    // Need to add realloc if bounds are reached
-    void next() { 
-        if (pos <= m_size) {
-            pos++; 
+    void prev() {
+        if (h->prev == nullptr) { 
+            Node* tmp_prev = new Node();
+            tmp_prev = (Node*)malloc(sizeof(Node));
+            tmp_prev->val = 0;
+            tmp_prev->prev = nullptr;
+            tmp_prev->next = h;
+
+            h->prev = tmp_prev;
+            h = h->prev;
+        } else {
+            h = h->prev;
         }
     }
 
-    void prev() { 
-        if (pos != 0 && pos) {
-            pos--; 
-        }
+    void inc() {
+        h->val = h->val + 1;
     }
 
-    uint16_t size() { return m_size; }
-    uint16_t val() { return mem[pos]; }
+    void dec() {
+        h->val = h->val - 1;
+    }
+
+    uint8_t val() {
+        return h->val;
+    }
 };
 
 int main() {
-    Mem block(16);
-    
-    block.inc();
-    block.inc();
-    block.inc();
-
-    std::cout << block.val() << std::endl;
-
-    block.next();
-    std::cout << block.val() << std::endl;
+    Tape tape;
+    tape.inc();
+    tape.inc();
+    std::cout << unsigned(tape.val()) << std::endl;
+    tape.next();
+    std::cout << unsigned(tape.val()) << std::endl;
+    tape.prev();
+    tape.dec();
+    tape.dec();
+    tape.dec();
+    tape.dec();
+    std::cout << unsigned(tape.val()) << std::endl;
 }
+
