@@ -14,21 +14,25 @@ private:
 public:
     Tape() {
         h = (Node*)malloc(sizeof(Node));
+        h->val = 0;
+        h->prev = nullptr;
+        h->next = nullptr;
     }
     ~Tape() {
         while (h->next != nullptr) {
             this->next(); 
         }
         while (h->prev != nullptr) {
-            Node** tmp = &h;
+            Node* tmp = h;
             this->prev();
-            free(*tmp);
+            free(tmp);
         }
+        free(h);
     }
 
     void next() {
         if (h->next == nullptr) { 
-            Node* tmp_next = new Node();
+            Node* tmp_next;// = new Node();
             tmp_next = (Node*)malloc(sizeof(Node));
             tmp_next->val = 0;
             tmp_next->prev = h;
@@ -43,8 +47,9 @@ public:
 
     void prev() {
         if (h->prev == nullptr) { 
-            Node* tmp_prev = new Node();
+            Node* tmp_prev; 
             tmp_prev = (Node*)malloc(sizeof(Node));
+            tmp_prev = new Node();
             tmp_prev->val = 0;
             tmp_prev->prev = nullptr;
             tmp_prev->next = h;
@@ -65,7 +70,8 @@ public:
     }
 
     uint8_t val() {
-        return h->val;
+        uint8_t ret = h->val;
+        return ret;
     }
 };
 
