@@ -1,80 +1,25 @@
 #include <iostream>
-#include <stdint.h>
+#include <string>
+#include <fstream>
+#include "tape.h"
 
-struct Node {
-    u_int8_t val = 0;
-    Node* prev = nullptr;
-    Node* next = nullptr;
-};
+int main(int argc, char** argv) {
+    std::string filename;
 
-class Tape {
-private:
-    Node* h;
-
-public:
-    Tape() {
-        h = (Node*)malloc(sizeof(Node));
-        h->val = 0;
-        h->prev = nullptr;
-        h->next = nullptr;
-    }
-    ~Tape() {
-        while (h->next != nullptr) { // Cycle to last node
-            this->next(); 
-        }
-        while (h->prev != nullptr) { // free tape elements
-            Node* tmp = h;
-            this->prev();
-            free(tmp);
-        }
-        free(h);  // 
+    if (argc < 1) {
+        std::cout << "please specify file" << std::endl;
+        return -1;
+    } else {
+        //std::cout << argv[1] << std::endl;
+        filename = argv[1];
     }
 
-    void next() {
-        if (h->next == nullptr) { 
-            Node* tmp_next;// = new Node();
-            tmp_next = (Node*)malloc(sizeof(Node));
-            tmp_next->val = 0;
-            tmp_next->prev = h;
-            tmp_next->next = nullptr;
-
-            h->next = tmp_next;
-            h = h->next;
-        } else {
-            h = h->next;
-        }
+    std::ifstream file(filename);
+    char ch;
+    while ( file >> std::skipws >> ch) {
+        std::cout << "ch: " << ch << std::endl;
     }
-
-    void prev() {
-        if (h->prev == nullptr) { 
-            Node* tmp_prev; 
-            tmp_prev = (Node*)malloc(sizeof(Node));
-            tmp_prev = new Node();
-            tmp_prev->val = 0;
-            tmp_prev->prev = nullptr;
-            tmp_prev->next = h;
-
-            h->prev = tmp_prev;
-            h = h->prev;
-        } else {
-            h = h->prev;
-        }
-    }
-
-    void inc() {
-        h->val = h->val + 1;
-    }
-
-    void dec() {
-        h->val = h->val - 1;
-    }
-
-    uint8_t val() {
-        return h->val;
-    }
-};
-
-int main() {
+    
     Tape tape;
     tape.inc();
     tape.inc();
