@@ -3,6 +3,8 @@
 #include <fstream>
 #include "tape.h"
 
+#define COUT(str) std::cout << str << std::endl
+
 int main(int argc, char** argv) {
     std::string filename;
 
@@ -10,27 +12,35 @@ int main(int argc, char** argv) {
         std::cout << "please specify file" << std::endl;
         return -1;
     } else {
-        //std::cout << argv[1] << std::endl;
         filename = argv[1];
     }
+
+    Tape tape;
 
     std::ifstream file(filename);
     char ch;
     while ( file >> std::skipws >> ch) {
-        std::cout << "ch: " << ch << std::endl;
+        //std::cout << "ch: " << ch << std::endl;
+
+        switch (ch) {
+            case '+':
+                tape.inc();
+                break;
+            case '-':
+                tape.dec();
+                break;
+            case '<':
+                tape.prev();
+                break;
+            case '>':
+                tape.next();
+                break;
+            case '.':
+                COUT(unsigned(tape.val()));
+                break;
+            default:
+                break;
+        }
     }
-    
-    Tape tape;
-    tape.inc();
-    tape.inc();
-    std::cout << unsigned(tape.val()) << std::endl;
-    tape.next();
-    std::cout << unsigned(tape.val()) << std::endl;
-    tape.prev();
-    tape.dec();
-    tape.dec();
-    tape.dec();
-    tape.dec();
-    std::cout << unsigned(tape.val()) << std::endl;
 }
 
