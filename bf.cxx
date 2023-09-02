@@ -52,8 +52,8 @@ public:
                             cmd_list.seekg(0); // rewind
                         }
                     }
-                } break;
-
+                    break;
+                } 
                 case ']':
                     throw std::runtime_error("Error: ']' with no "
                                              " matching '['");
