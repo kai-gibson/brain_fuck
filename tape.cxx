@@ -1,13 +1,32 @@
 #include <iostream>
 #include "tape.h"
 
-Tape::Tape() { h = std::make_shared<Node>(Node()); }
+Tape::Tape() {
+        h = (Node*)malloc(sizeof(Node));
+        h->val = 0;
+        h->prev = nullptr;
+        h->next = nullptr;
+}
+
+Tape::~Tape() {
+        while (h->next != nullptr) { // Cycle to last node
+            this->next(); 
+        }
+        while (h->prev != nullptr) { // free tape elements
+            Node* tmp = h;
+            this->prev();
+            free(tmp);
+        }
+        free(h);  // 
+}
 
 void Tape::next() {
     if (h->next == nullptr) { 
-        std::shared_ptr<Node> tmp_next = std::make_shared<Node>(
-            Node{0, h, nullptr}
-        );
+        Node* tmp_next;// = new Node();
+        tmp_next = (Node*)malloc(sizeof(Node));
+        tmp_next->val = 0;
+        tmp_next->prev = h;
+        tmp_next->next = nullptr;
 
         h->next = tmp_next;
         h = h->next;
@@ -18,17 +37,21 @@ void Tape::next() {
 
 void Tape::prev() {
     if (h->prev == nullptr) { 
-        std::shared_ptr<Node> tmp_prev = std::make_shared<Node>(
-            Node{0, nullptr, h}
-        );
+        Node* tmp_prev; 
+        tmp_prev = (Node*)malloc(sizeof(Node));
+        tmp_prev = new Node();
+        tmp_prev->val = 0;
+        tmp_prev->prev = nullptr;
+        tmp_prev->next = h;
+
         h->prev = tmp_prev;
         h = h->prev;
-    } else { 
-        h = h->prev; 
+    } else {
+        h = h->prev;
     }
 }
 
-void Tape::input() { 
+void Tape::input() {
     if (stdin == "") {
         std::cin >> stdin; 
     }
@@ -44,7 +67,7 @@ void Tape::input() {
     }
 }
 
-void Tape::print() { std::cout << h->val; }
 void Tape::inc() { h->val = h->val + 1; }
-void Tape::dec() { h->val = h->val - 1; }
+void Tape::dec() { h->val = h->val - 1;}
+void Tape::print() { std::cout << h->val; }
 uint8_t Tape::val() { return h->val; }
