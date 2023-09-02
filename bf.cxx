@@ -9,17 +9,18 @@ private:
     Tape t;
 public:
     Interpreter(std::string filename) {
-        std::ifstream fs(filename);
+        //std::ifstream fs(filename);
+        std::shared_ptr<std::ifstream> fs = std::make_shared<std::ifstream>(std::ifstream(filename));
         eval(fs);
     }
 
     template<typename T>
-    void eval(T& i_stream) {
+    void eval(std::shared_ptr<T>& i_stream) {
         static_assert(std::is_base_of_v<std::istream, T>, 
                       "arg must be istream");
 
         char ch;
-        while (i_stream >> std::skipws >> ch) {
+        while (*i_stream >> std::skipws >> ch) {
             switch (ch) {
                 case '+':
                     t.inc();
@@ -41,14 +42,16 @@ public:
                     t.input();
                     break;
                 case '[': {
-                    std::stringstream cmd_list; 
-                    //auto cmd_list_ptr = std::make_shared<std::stringstream>(cmd_list);
-                    cmd_list << find_match(i_stream);
-                    if (cmd_list.str() != "") {
+                    //std::stringstream cmd_list; 
+                    auto cmd_list = std::make_shared<std::stringstream>(
+                            std::stringstream()
+                            );
+                    *cmd_list << find_match(i_stream);
+                    if (cmd_list->str() != "") {
                         while (t.val() != 0) {
                             eval(cmd_list);
-                            cmd_list.clear();
-                            cmd_list.seekg(0); // rewind
+                            cmd_list->clear();
+                            cmd_list->seekg(0); // rewind
                         }
                     }
                 } break;
@@ -64,7 +67,7 @@ public:
     }
 
     template<typename T>
-    std::string find_match(T& i_stream) {
+    std::string find_match(std::shared_ptr<T>& i_stream) {
         static_assert(std::is_base_of_v<std::istream, T>, 
                       "arg must be istream");  
 
@@ -73,7 +76,7 @@ public:
         char ch;
         uint32_t depth = 1;
         while (depth != 0) {
-            if (!(i_stream >> std::skipws >> ch) && depth != 0) {
+            if (!(*i_stream >> std::skipws >> ch) && depth != 0) {
                 throw std::runtime_error("Error: couldn't find matching "
                                          "']' for '['"); 
             }
