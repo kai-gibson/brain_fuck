@@ -1,30 +1,58 @@
 #include <iostream>
 #include "tape.h"
 
-Tape::Tape() { h = std::make_shared<Node>(Node()); }
+#define WEAK std::weak_ptr<Node>
+#define STRONG std::shared_ptr<Node>
+
+Tape::Tape() { 
+        h = std::make_shared<Node>(
+            Node { 
+                0, 
+                std::weak_ptr<Node>(),
+                std::weak_ptr<Node>()
+            }
+        ); 
+}
 
 void Tape::next() {
-    if (h->next == nullptr) { 
-        std::shared_ptr<Node> tmp_next = std::make_shared<Node>(
-            Node{0, h, nullptr}
-        );
+    try {
+        if (std::get<WEAK>(h->next).expired()) {
+            std::shared_ptr<Node> tmp_next = std::make_shared<Node>(
+                Node{
+                    0, 
+                    std::weak_ptr<Node>(h), 
+                    std::weak_ptr<Node>()
+                }
+            );
 
-        h->next = tmp_next;
-        h = h->next;
-    } else {
-        h = h->next;
+            h->next.emplace<STRONG>(tmp_next);
+            h = std::get<STRONG>(h->next);
+        } else {
+            h = std::get<WEAK>(h->next).lock();
+        }
+    } catch (std::bad_variant_access const& ex) {
+        h = std::get<STRONG>(h->next);
     }
 }
 
 void Tape::prev() {
-    if (h->prev == nullptr) { 
-        std::shared_ptr<Node> tmp_prev = std::make_shared<Node>(
-            Node{0, nullptr, h}
-        );
-        h->prev = tmp_prev;
-        h = h->prev;
-    } else { 
-        h = h->prev; 
+    try {
+        if (std::get<WEAK>(h->prev).expired()) { 
+            std::shared_ptr<Node> tmp_prev = std::make_shared<Node>(
+                Node{
+                    0,
+                    std::weak_ptr<Node>(),
+                    std::weak_ptr<Node>(h)
+                }
+            );
+
+            h->prev.emplace<STRONG>(tmp_prev);
+            h = std::get<STRONG>(h->prev);
+        } else {
+            h = std::get<WEAK>(h->prev).lock();
+        }
+    } catch (std::bad_variant_access const& ex) {
+        h = std::get<STRONG>(h->prev);
     }
 }
 

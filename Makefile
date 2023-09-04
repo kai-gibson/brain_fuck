@@ -6,3 +6,6 @@ brain_fuck: bf.cxx tape.cxx
 
 run: brain_fuck
 	./brain_fuck test.bf
+
+clean:
+	rm brain_fuck

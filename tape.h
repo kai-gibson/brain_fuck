@@ -1,12 +1,17 @@
 #include <stdint.h>
 #include <memory>
 #include <string>
+#include <variant>
+
+template<typename T>
+using ptr = std::variant<std::weak_ptr<T>, std::shared_ptr<T>>;
 
 struct Node {
     uint8_t val = 0;
-    std::shared_ptr<Node> prev = nullptr;
-    std::shared_ptr<Node> next = nullptr;
+    ptr<Node> prev = std::weak_ptr<Node>();
+    ptr<Node> next = std::weak_ptr<Node>();
 };
+
 
 class Tape {
 private:
