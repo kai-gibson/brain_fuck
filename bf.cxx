@@ -175,7 +175,7 @@ int main(int argc, char** argv) {
     uint32_t outer_loop = 0;
     bool outer_loop_set = false;
     bool loop_count_set = false;
-    uint8_t val = 10;
+    uint8_t val = 0;
 
     for (uint32_t i=0; i<cmd_list.size(); i++) {
         switch (cmd_list[i]) {
@@ -188,44 +188,31 @@ int main(int argc, char** argv) {
 
                 if (val == 0) {
                     // skip loop
-                    if (brace_pairs[loop_count].depth > 0) {
-                        i = brace_pairs[loop_count].last;
+                    i = brace_pairs[loop_count].last;
+                    // skip nested loops
+                    while (brace_pairs[loop_count].last < i) {
+                        loop_count++;
                     }
-                } else {
-                }
-
-                //if (!outer_loop_set) {
-                //    outer_loop = loop_count;
-                //    outer_loop_set = true;
-                //} else {
-                //    loop_count++;
-                //}
-                //if (val == 0) {
-                //    // skip loop
-                //    i = brace_pairs[outer_loop].last;
-                //    loop_count++; // get next loop
-                //    while (brace_pairs[loop_count].first < 
-                //            brace_pairs[outer_loop].last  ) {
-                //        // if we skip outer loop, also skip inner loops
-                //        loop_count++;
-                //    }
-                //    outer_loop_set = false;
-                //} else {
-                //    // run loop
-                //}
-                //if (loop_count != 0) {
-                //}
+                } 
                 break;
             }
             case ']': {
                 if (val != 0) {
-                    // go back to start of loop
-                    if (outer_loop_set && (outer_loop == loop_count)) {
-                        i = brace_pairs[outer_loop].first;
-                    }
+                    // Go back to loop start
+                    i = brace_pairs[loop_count].first;
+                    //if (i != 0) i--;
                 } else {
-                    outer_loop_set = false;
-                    outer_loop = 0;
+                    if (brace_pairs[loop_count].depth > 0) {
+                        // go back to previous loop 
+                        // and don't allow iteration
+                        loop_count_set = false;
+                        loop_count--;
+                    } else {
+                        // skip nested loops
+                        while (i < brace_pairs[loop_count].last) {
+                            loop_count++;
+                        }
+                    }
                 }
                 break;
             }
@@ -233,6 +220,12 @@ int main(int argc, char** argv) {
             case '-': {
                 val--;
                 std::cout << "val -" << std::endl;
+                break;
+            }
+            case '+': {
+                val++;
+                std::cout << "val +" << std::endl;
+                break;
             }
             default:
                 std::cout << cmd_list[i] << std::endl;
