@@ -69,5 +69,5 @@ void Tape::input() {
 
 void Tape::inc() { h->val = h->val + 1; }
 void Tape::dec() { h->val = h->val - 1;}
-void Tape::print() { std::cout << h->val; }
+void Tape::print() { std::cout << char(h->val); }
 uint8_t Tape::val() { return h->val; }
