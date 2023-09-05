@@ -3,6 +3,7 @@
 #include <fstream>
 #include <vector>
 #include <stdint.h>
+#include <unordered_map>
 #include "tape.h"
 
 struct Brace_Pair {
@@ -11,48 +12,57 @@ struct Brace_Pair {
     bool nested;
 };
 
-std::vector<Brace_Pair> find_matching_braces(std::vector<uint8_t> v) {
-    uint32_t depth = 0;
-    uint32_t current_loop = 0;
-    std::vector<Brace_Pair> pairs;
+std::unordered_map<uint32_t, uint32_t> 
+match_braces(std::vector<uint8_t> v) {
+    std::unordered_map<uint32_t, uint32_t> map;
+    std::vector<uint32_t> open;
+    std::vector<uint32_t> close;
 
-    for (uint32_t i=0; i< v.size(); i++) {
-        switch (v[i]) {
-            case '[': {
-                pairs.push_back(
-                    {i, 0, (depth > 0 ?true : false)}
-                );
-                if (depth == 0) { 
-                    std::cout << "current_loop: " << pairs.size() << std::endl;
-                    current_loop = pairs.size()-1; 
-                }
-                depth++; 
+    for (uint32_t i=0; i< v.size(); i++) { // Get all brackets
+        switch(v[i]) {
+            case '[' :
+                open.push_back(i);
                 break;
-            }
-            case ']': {
-                if (depth > 1) {   
-                    depth--;
-                    std::cout << "depth>1, size: " << pairs.size()-1 << std::endl;
-                    pairs[current_loop + depth].last = i;
-                } 
-                else if (depth == 1) {
-                    depth--;
-                    pairs[current_loop].last = i;
-                } else {
-                    pairs[current_loop].last = i;
-                }
-
+            case ']' :
+                close.push_back(i);
                 break;
             default:
+                break;
+        }
+    }
+
+    /*
+    std::cout << "open : ";
+    for (uint32_t i=0; i < open.size(); i++) {
+        std::cout << open[i] << ", "; 
+    }
+    std::cout << "\n";
+
+    std::cout << "close : ";
+    for (uint32_t i=0; i < close.size(); i++) {
+        std::cout << close[i] << ", "; 
+    }
+    std::cout << "\n";
+    */
+
+    if (open.size() != close.size()) {
+        throw std::runtime_error("mismatch of '[' and ']'");
+    }
+
+    for (uint32_t i=open.size(); i-- > 0;) {
+        for (uint32_t v=0; v < close.size(); v++) {
+            if (open[i] < close[v]) {
+                //std::cout << "matched : " << open[i] << " = " 
+                //          << close[v] << std::endl;
+                map[open[i]] = close[v]; 
+                map[close[v]] = open[i]; 
+                close[v] = 0;
                 break;
             }
         }
     }
-    if (depth != 0) {
-        throw std::runtime_error("Error, braces mismatched");
-    }
 
-    return pairs;
+    return map;
 }
 
 int main(int argc, char** argv) {
@@ -70,18 +80,16 @@ int main(int argc, char** argv) {
     std::vector<uint8_t> cmd_list(
             std::istreambuf_iterator<char>(fs), {});
 
+
+    //for (uint32_t i = 0; i < pairs.size(); i++) {
+    //    std::cout << "first: " << pairs[i].first
+    //              << " last: " << pairs[i].last 
+    //              << " nested: " << pairs[i].nested << std::endl;
+    //}
+
     // Get pairs of braces
-    std::vector<Brace_Pair> pairs = find_matching_braces(cmd_list);
-
-    for (uint32_t i = 0; i < pairs.size(); i++) {
-        std::cout << "first: " << pairs[i].first
-                  << " last: " << pairs[i].last 
-                  << " nested: " << pairs[i].nested << std::endl;
-    }
-
+    std::unordered_map<uint32_t, uint32_t> brace_map = match_braces(cmd_list);
     Tape t;
-    uint32_t loop_count = 0;
-    bool loop_count_set = false;
 
     for (uint32_t i=0; i<cmd_list.size(); i++) {
         switch (cmd_list[i]) {
@@ -98,39 +106,18 @@ int main(int argc, char** argv) {
                 t.next();
                 break;
             case '.':
-                //std::cout << t.val() << "\n";
+                //std::cout << "val: " << t.val()) << "\n";
                 t.print();
                 break;
             case ',':
                 t.input();
                 break;
-            case '[' : {
-                if (!loop_count_set) {
-                    loop_count_set = true;
-                } else {
-                    while (pairs[loop_count].first < i) {
-                        loop_count++;
-                    }
-                }
-
-                if (t.val() == 0) {
-                    i = pairs[loop_count].last;
-                    if (pairs[loop_count].nested) {
-                        loop_count--;
-                    } else {
-                        loop_count++;
-                    }
-                }
+            case '[' : 
+                if (t.val() == 0) i = brace_map[i];
                 break;
-            }
-            case ']' : {
-                if (t.val() != 0) {
-                    i = pairs[loop_count].first;
-                } else {
-                    if (pairs[loop_count].nested) loop_count++;
-                }
+            case ']' :
+                if (t.val() != 0) i = brace_map[i];
                 break;
-            }
             default:
                 break;
         }
