@@ -3,7 +3,69 @@
 #include <fstream>
 #include <vector>
 #include <stdint.h>
+#include <chrono>
 #include "tape.h"
+
+/*
+class Tape {
+private:
+    std::vector<uint8_t> fwd;
+    std::vector<uint8_t> bwd;
+    int32_t head;
+    ssize_t size = 256;
+    std::string stdin = "";
+    uint32_t current_char = 0; 
+public:
+    Tape() {
+        fwd.resize(size);
+        bwd.resize(size);
+    }
+    void next() {
+        if (head++ >= size) {
+            size += 256; 
+            fwd.resize(size); 
+        }
+    }
+    void prev() {
+        if(abs(head--) >= size) {
+            size += 256; 
+            bwd.resize(size) ;
+        }
+    }
+    void inc() {
+        this->val()++;
+    }
+    void dec() {
+        this->val()--;
+    }
+    uint8_t& val() {
+        return (head < 0 ? bwd[abs(head)] : fwd[head]);
+    }
+    void print() {
+        std::cout << char(this->val());
+    }
+
+    void input() {
+        if (stdin == "") {
+            std::cin >> stdin; 
+        }
+        if (current_char < stdin.length()) {
+            if (std::isdigit(stdin[current_char])) {
+                this->val() = int(stdin[current_char] - '0'); // is this unsafe?
+            } else {
+                this->val() = stdin[current_char];
+            }
+            current_char++;
+        } else {
+            this->val() = 0;
+        }
+    }
+    
+    uint8_t& operator[] (int32_t i) {
+        return (i < 0 ? bwd[abs(i)] : fwd[i] );
+    }
+};
+*/
 
 //std::unordered_map<uint32_t, uint32_t> 
 std::vector<uint32_t>
@@ -39,6 +101,9 @@ match_braces(std::vector<uint8_t> v) {
 }
 
 int main(int argc, char** argv) {
+    std::cout << std::fixed;
+    auto begin1 = std::chrono::high_resolution_clock::now();
+
     std::string filename;
 
     if (argc <= 1) {
@@ -50,12 +115,19 @@ int main(int argc, char** argv) {
 
     // load file into vector
     std::ifstream fs(filename);
-    std::vector<uint8_t> cmd_list(
-            std::istreambuf_iterator<char>(fs), {});
+    std::vector<uint8_t> cmd_list(std::istreambuf_iterator<char>(fs), {});
 
+    auto end1 = std::chrono::high_resolution_clock::now();
+    std::cout << "t1: " << std::chrono::duration<double>(end1-begin1).count() << std::endl;
+
+    auto begin2 = std::chrono::high_resolution_clock::now();
     std::vector<uint32_t> brace_map = match_braces(cmd_list);
 
+    auto end2 = std::chrono::high_resolution_clock::now();
+    std::cout << "t2: " << std::chrono::duration<double>(end2-begin2).count() << std::endl;
     Tape t;
+
+    auto begin3 = std::chrono::high_resolution_clock::now();
 
     for (uint32_t i=0; i<cmd_list.size(); i++) {
         switch (cmd_list[i]) {
@@ -90,5 +162,8 @@ int main(int argc, char** argv) {
         }
     }
 
+    auto end3 = std::chrono::high_resolution_clock::now();
+
+    std::cout << "t3: " << std::chrono::duration<double>(end3-begin3).count() << std::endl;
     return 0;
 }
