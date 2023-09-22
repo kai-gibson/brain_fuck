@@ -5,84 +5,14 @@
 #include <stdint.h>
 #include <memory.h>
 #include <chrono>
-#include "tape.h"
+//#include "tape.h"
 
-//#define BLOCK_SIZE 1024
-
-// dangerous pointer idea
-/*
-class Tape {
-private:
-    uint8_t* ptr; 
-    int32_t head;
-    std::string stdin = "";
-    uint32_t current_char = 0; 
-public:
-    Tape() {
-        ptr = (uint8_t*)malloc(BLOCK_SIZE);
-        memset(ptr, 0, sizeof(*ptr));         // Initialize array to zero
-        head = BLOCK_SIZE/2;
-    }
-    void next() {
-        ptr++;
-        head++;
-
-        if ( head >= 1024) {
-            throw std::runtime_error("error, reached right "
-                                     "bounds of malloced block");
-        } 
-    }
-    void prev() {
-        ptr--;
-        head--;
-
-        if (head <= 0) {
-            throw std::runtime_error("error, reached left "
-                                     "bound of malloced block");
-        } 
-    }
-    void inc() {
-        *ptr+=1;
-    }
-    void dec() {
-        *ptr-=1;
-    }
-
-    void set(uint8_t val) {
-        *ptr=val;
-    }
-
-    uint8_t val() {
-        return *ptr;
-    }
-    void print() {
-        std::cout << char(*ptr);
-    }
-
-    void input() {
-        if (stdin == "") {
-            std::cin >> stdin; 
-        }
-        if (current_char < stdin.length()) {
-            if (std::isdigit(stdin[current_char])) {
-                *ptr = int(stdin[current_char] - '0'); // is this unsafe?
-            } else {
-                *ptr = stdin[current_char];
-            }
-            current_char++;
-        } else {
-            *ptr = 0;
-        }
-    }
-};
-*/
-/*
 class Tape {
 private:
     std::vector<uint8_t> fwd;
     std::vector<uint8_t> bwd;
     int32_t head;
-    ssize_t size = 256;
+    ssize_t size = 512;
     std::string stdin = "";
     uint32_t current_char = 0; 
 public:
@@ -90,27 +20,41 @@ public:
         fwd.resize(size);
         bwd.resize(size);
     }
+
     void next() {
         if (head++ >= size) {
             size += 256; 
             fwd.resize(size); 
+            bwd.resize(size); 
         }
     }
+
     void prev() {
         if(abs(head--) >= size) {
             size += 256; 
             bwd.resize(size) ;
+            fwd.resize(size) ;
         }
     }
-    void inc() {
-        this->val()++;
+
+    void jump_to(int32_t new_head) {
+        if(abs(new_head) >= size) {
+            size += 256; 
+            bwd.resize(size) ;
+            fwd.resize(size) ;
+        }
+
+        head = new_head;
     }
-    void dec() {
-        this->val()--;
-    }
+
+    void inc() { this->val()++; }
+    void dec() { this->val()--; }
+    void set(uint8_t new_val) { this->val() = new_val; }
+
     uint8_t& val() {
         return (head < 0 ? bwd[abs(head)] : fwd[head]);
     }
+
     void print() {
         std::cout << char(this->val());
     }
@@ -135,9 +79,7 @@ public:
         return (i < 0 ? bwd[abs(i)] : fwd[i] );
     }
 };
-*/
 
-//std::unordered_map<uint32_t, uint32_t> 
 std::vector<uint32_t>
 match_braces(std::vector<uint8_t> v) {
     //std::unordered_map<uint32_t, uint32_t> map;
@@ -199,13 +141,32 @@ int main(int argc, char** argv) {
 
     auto begin3 = std::chrono::high_resolution_clock::now();
 
+    uint8_t inc_count = 0;
+    uint8_t dec_count = 0;
+
     for (uint32_t i=0; i<cmd_list.size(); i++) {
         switch (cmd_list[i]) {
             case '+':
-                t.inc();
+                if (cmd_list[i+1] == '+') {
+                    inc_count++;
+                } else if (inc_count) {
+                    inc_count++;
+                    t.set(t.val() + inc_count);
+                    inc_count = 0;
+                } else {
+                    t.inc();
+                }
                 break;
             case '-':
-                t.dec();
+                if (cmd_list[i+1] == '-') {
+                    dec_count++;
+                } else if (dec_count) {
+                    dec_count++;
+                    t.set(t.val() - dec_count);
+                    dec_count = 0;
+                } else {
+                    t.dec();
+                }
                 break;
             case '<':
                 t.prev();
