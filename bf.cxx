@@ -199,38 +199,51 @@ int main(int argc, char** argv) {
 
     auto begin3 = std::chrono::high_resolution_clock::now();
 
+    std::ofstream out_fs;
+    out_fs.open("out.cxx");
+
     for (uint32_t i=0; i<cmd_list.size(); i++) {
         switch (cmd_list[i]) {
             case '+':
-                t.inc();
+                out_fs << "t.inc();\n";
+                //t.inc();
                 break;
             case '-':
-                t.dec();
+                out_fs << "t.dec();\n";
+                //t.dec();
                 break;
             case '<':
-                t.prev();
+                out_fs << "t.prev();\n";
+                //t.prev();
                 break;
             case '>':
-                t.next();
+                //t.next();
+                out_fs << "t.next();\n";
                 break;
             case '.':
                 //std::cout << "val: " << t.val()) << "\n";
-                t.print();
+                out_fs << "t.print();\n";
+                //t.print();
                 break;
             case ',':
-                t.input();
+                out_fs << "t.input();\n";
+                //t.input();
                 break;
             case '[' : 
                 // Could this accidentally accesss unallocd mem?
-                if (t.val() == 0) i = brace_map[i];
+                out_fs << "while (t.val() != 0) {\n";
+                //if (t.val() == 0) i = brace_map[i];
                 break;
             case ']' :
-                if (t.val() != 0) i = brace_map[i];
+                out_fs << "}\n";
+                //if (t.val() != 0) i = brace_map[i];
                 break;
             default:
                 break;
         }
     }
+
+    out_fs.close();
 
     auto end3 = std::chrono::high_resolution_clock::now();
 
