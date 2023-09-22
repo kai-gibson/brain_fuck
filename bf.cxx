@@ -3,9 +3,79 @@
 #include <fstream>
 #include <vector>
 #include <stdint.h>
+#include <memory.h>
 #include <chrono>
 #include "tape.h"
 
+//#define BLOCK_SIZE 1024
+
+// dangerous pointer idea
+/*
+class Tape {
+private:
+    uint8_t* ptr; 
+    int32_t head;
+    std::string stdin = "";
+    uint32_t current_char = 0; 
+public:
+    Tape() {
+        ptr = (uint8_t*)malloc(BLOCK_SIZE);
+        memset(ptr, 0, sizeof(*ptr));         // Initialize array to zero
+        head = BLOCK_SIZE/2;
+    }
+    void next() {
+        ptr++;
+        head++;
+
+        if ( head >= 1024) {
+            throw std::runtime_error("error, reached right "
+                                     "bounds of malloced block");
+        } 
+    }
+    void prev() {
+        ptr--;
+        head--;
+
+        if (head <= 0) {
+            throw std::runtime_error("error, reached left "
+                                     "bound of malloced block");
+        } 
+    }
+    void inc() {
+        *ptr+=1;
+    }
+    void dec() {
+        *ptr-=1;
+    }
+
+    void set(uint8_t val) {
+        *ptr=val;
+    }
+
+    uint8_t val() {
+        return *ptr;
+    }
+    void print() {
+        std::cout << char(*ptr);
+    }
+
+    void input() {
+        if (stdin == "") {
+            std::cin >> stdin; 
+        }
+        if (current_char < stdin.length()) {
+            if (std::isdigit(stdin[current_char])) {
+                *ptr = int(stdin[current_char] - '0'); // is this unsafe?
+            } else {
+                *ptr = stdin[current_char];
+            }
+            current_char++;
+        } else {
+            *ptr = 0;
+        }
+    }
+};
+*/
 /*
 class Tape {
 private:
