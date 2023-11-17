@@ -3,8 +3,8 @@ CXX ?= /usr/bin/g++
 CXXFLAGS = -O3
 
 
-brain_fuck: bf.cxx tape.cxx
-	${CXX} $(CXXFLAGS) bf.cxx -o brain_fuck 
+brain_fuck: bf.cxx tape.cxx Makefile
+	${CXX} $(CXXFLAGS) bf.cxx tape.cxx -o brain_fuck 
 
 run: brain_fuck
-	./brain_fuck test.bf
+	./brain_fuck ./examples/test.bf

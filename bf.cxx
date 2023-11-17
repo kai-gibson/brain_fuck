@@ -5,81 +5,7 @@
 #include <stdint.h>
 #include <memory.h>
 #include <chrono>
-//#include "tape.h"
-
-// TODO move this to tape.h
-class Tape {
-private:
-    std::vector<uint8_t> fwd;
-    std::vector<uint8_t> bwd;
-    int32_t head;
-    ssize_t size = 512;
-    std::string stdin = "";
-    uint32_t current_char = 0; 
-public:
-    Tape() {
-        fwd.resize(size);
-        bwd.resize(size);
-    }
-
-    void next() {
-        if (head++ >= size) {
-            size += 256; 
-            fwd.resize(size); 
-            bwd.resize(size); 
-        }
-    }
-
-    void prev() {
-        if(abs(head--) >= size) {
-            size += 256; 
-            bwd.resize(size) ;
-            fwd.resize(size) ;
-        }
-    }
-
-    void jump_to(int32_t new_head) {
-        if(abs(new_head) >= size) {
-            size += 256; 
-            bwd.resize(size) ;
-            fwd.resize(size) ;
-        }
-
-        head = new_head;
-    }
-
-    void inc() { this->val()++; }
-    void dec() { this->val()--; }
-    void set(uint8_t new_val) { this->val() = new_val; }
-
-    uint8_t& val() {
-        return (head < 0 ? bwd[abs(head)] : fwd[head]);
-    }
-
-    void print() {
-        std::cout << char(this->val());
-    }
-
-    void input() {
-        if (stdin == "") {
-            std::cin >> stdin; 
-        }
-        if (current_char < stdin.length()) {
-            if (std::isdigit(stdin[current_char])) {
-                this->val() = int(stdin[current_char] - '0'); // is this unsafe?
-            } else {
-                this->val() = stdin[current_char];
-            }
-            current_char++;
-        } else {
-            this->val() = 0;
-        }
-    }
-    
-    uint8_t& operator[] (int32_t i) {
-        return (i < 0 ? bwd[abs(i)] : fwd[i] );
-    }
-};
+#include "tape.h"
 
 enum Token_Id {
     INC,
@@ -101,57 +27,65 @@ std::vector<Token> tokenise(std::vector<uint8_t> v) {
     std::vector<Token> token_list;
 
     uint8_t op_count = 0;
+    int32_t ins_count = 0;
     std::vector<uint32_t> open_braces;
 
     for (uint32_t i=0; i<v.size(); i++) {
-        switch(v[i]) {
+        switch(v.at(i)) {
             // TODO make this DRY
             // TODO fix segfault (probably in bracket logic)
             // TODO make stacking instructions check they're not at 
             // end of list
             case '+':
-                while (v[i+op_count] == '+') op_count++;
+                while (v.at(i+op_count) == '+') op_count++;
                 token_list.push_back({INC, op_count});
-                i += op_count;
+                i += op_count-1;
                 op_count = 0;
+                ins_count++; 
                 break;
             case '-':
-                while (v[i+op_count] == '-') op_count++;
+                while (v.at(i+op_count) == '-') op_count++;
                 token_list.push_back({DEC, op_count});
-                i += op_count;
+                i += op_count-1;
                 op_count = 0;
+                ins_count++; 
                 break;
             case '<':
-                while (v[i+op_count] == '<') op_count++;
+                while (v.at(i+op_count) == '<') op_count++;
                 token_list.push_back({LEFT, op_count});
-                i += op_count;
+                i += op_count-1;
                 op_count = 0;
+                ins_count++; 
                 break;
             case '>':
-                while (v[i+op_count] == '>') op_count++;
+                while (v.at(i+op_count) == '>') op_count++;
                 token_list.push_back({RIGHT, op_count});
-                i += op_count;
+                i += op_count-1;
                 op_count = 0;
+                ins_count++; 
                 break;
             case '.':
-                token_list.push_back({PRINT});
+                token_list.push_back({PRINT, 0});
+                ins_count++; 
                 break;
             case ',':
-                token_list.push_back({IN});
+                token_list.push_back({IN, 0});
+                ins_count++; 
                 break;
             case '[' : 
-                token_list.push_back({OPEN});
-                open_braces.push_back(i);
+                token_list.push_back({OPEN, 0});
+                open_braces.push_back(ins_count);
+                ins_count++; 
                 break;
             case ']' :
                 if (open_braces.size() == 0) {
                     throw std::runtime_error("mismatched braces");
                 }
 
-                token_list[open_braces[open_braces.size()-1]].val = i; // open brace idx = close brace idx
-                token_list.push_back({CLOSE, open_braces[open_braces.size()-1]});
-
+                token_list.at(open_braces.back()).val = ins_count; // open brace idx = close brace idx
+                token_list.push_back({CLOSE, open_braces.back()});
                 open_braces.pop_back();
+                ins_count++; // keep track of token list position
                 break;
             default:
                 break;
@@ -159,38 +93,6 @@ std::vector<Token> tokenise(std::vector<uint8_t> v) {
     }
 
     return token_list;
-}
-
-std::vector<uint32_t>
-match_braces(std::vector<uint8_t> v) {
-    //std::unordered_map<uint32_t, uint32_t> map;
-    std::vector<uint32_t> map;
-    map.resize(v.size());
-    //map = {};
-    std::vector<uint32_t> open;
-
-    for (uint32_t i=0; i< v.size(); i++) { // Get all brackets
-        switch(v[i]) {
-            case '[' :
-                open.push_back(i);
-                break;
-            case ']' :
-                if (open.size() == 0) {
-                    throw std::runtime_error("mismatched braces");
-                }
-                map[open[open.size()-1]] = i;
-                map[i] = open[open.size()-1];
-                open.pop_back();
-                break;
-            default:
-                break;
-        }
-    }
-
-    if (open.size() != 0) {
-        throw std::runtime_error("mismatched braces");
-    } 
-    return map;
 }
 
 int main(int argc, char** argv) {
@@ -218,62 +120,37 @@ int main(int argc, char** argv) {
     // tokenise
     auto token_list = tokenise(cmd_list);
 
-    std::vector<uint32_t> brace_map = match_braces(cmd_list);
-
     auto end2 = std::chrono::high_resolution_clock::now();
     std::cout << "t2: " << std::chrono::duration<double>(end2-begin2).count() << std::endl;
     Tape t;
 
     auto begin3 = std::chrono::high_resolution_clock::now();
 
-    uint8_t inc_count = 0;
-    uint8_t dec_count = 0;
-
-    for (uint32_t i=0; i<cmd_list.size(); i++) {
-        switch (cmd_list[i]) {
-            case '+':
-                t.inc();
-                //if (cmd_list[i+1] == '+') {
-                //    inc_count++;
-                //} else if (inc_count) {
-                //    inc_count++;
-                //    t.set(t.val() + inc_count);
-                //    inc_count = 0;
-                //} else {
-                //    t.inc();
-                //}
+    for (uint32_t i=0; i<token_list.size(); i++) {
+        switch (token_list.at(i).id) {
+            case INC:
+                t.inc(token_list.at(i).val);
                 break;
-            case '-':
-                //if (cmd_list[i+1] == '-') {
-                //    dec_count++;
-                //} else if (dec_count) {
-                //    dec_count++;
-                //    t.set(t.val() - dec_count);
-                //    dec_count = 0;
-                //} else {
-                //    t.dec();
-                //}
-                t.dec();
+            case DEC:
+                t.dec(token_list.at(i).val);
                 break;
-            case '<':
-                t.prev();
+            case LEFT:
+                t.prev(token_list.at(i).val);
                 break;
-            case '>':
-                t.next();
+            case RIGHT:
+                t.next(token_list.at(i).val);
                 break;
-            case '.':
-                //std::cout << "val: " << t.val()) << "\n";
+            case PRINT:
                 t.print();
                 break;
-            case ',':
+            case IN:
                 t.input();
                 break;
-            case '[' : 
-                // Could this accidentally accesss unallocd mem?
-                if (t.val() == 0) i = brace_map[i];
+            case OPEN:
+                if (t.val() == 0) i = token_list.at(i).val;
                 break;
-            case ']' :
-                if (t.val() != 0) i = brace_map[i];
+            case CLOSE:
+                if (t.val() != 0) i = token_list.at(i).val;
                 break;
             default:
                 break;
