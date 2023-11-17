@@ -25,17 +25,13 @@ struct Token {
 
 std::vector<Token> tokenise(std::vector<uint8_t> v) {
     std::vector<Token> token_list;
+    std::vector<uint32_t> open_braces;
 
     uint8_t op_count = 0;
     int32_t ins_count = 0;
-    std::vector<uint32_t> open_braces;
 
     for (uint32_t i=0; i<v.size(); i++) {
         switch(v.at(i)) {
-            // TODO make this DRY
-            // TODO fix segfault (probably in bracket logic)
-            // TODO make stacking instructions check they're not at 
-            // end of list
             case '+':
                 while (v.at(i+op_count) == '+') op_count++;
                 token_list.push_back({INC, op_count});

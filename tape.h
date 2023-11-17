@@ -15,12 +15,9 @@ public:
     Tape();
     void next(uint16_t amt);
     void prev(uint16_t amt);
-    void jump_to(int32_t new_head);
     void inc(uint16_t amt);
     void dec(uint16_t amt);
-    void set(uint8_t new_val);
     uint8_t& val();
     void print();
     void input();
-    uint8_t& operator[] (int32_t i);
 };
