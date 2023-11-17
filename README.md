@@ -1,5 +1,5 @@
 # brain_fuck
-## A very fast brainfuck interpreter written in modern c++
+## A Very Fast Brainfuck Interpreter Written In Modern C++
 
 to use:
 ```
